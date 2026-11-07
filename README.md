@@ -1,27 +1,33 @@
-# 🧠 RESEARCHMIND – An Agentic AI Research Assistant
+# 🧠 RESEARCHMIND – Multimodal Agentic AI Research Assistant
 
-RESEARCHMIND is an advanced, production-grade full-stack research workspace engineered to help students, PhD scholars, and machine learning researchers analyze academic literature, dissect technical concepts, conduct cross-paper comparative analyses, identify research gaps, and generate structured literature reviews with verified page-level source citations.
+RESEARCHMIND is an advanced, production-grade full-stack research workspace engineered to help students, PhD scholars, and machine learning researchers analyze academic literature, conduct multimodal visual reasoning over architecture diagrams and benchmark plots, dissect technical concepts, conduct cross-paper comparative analyses, identify research gaps, and generate structured literature reviews with verified page-level source citations.
 
 ---
 
 ## 🌟 Key Capabilities
 
-### 1. 📚 Document Library & Vector Ingestion
-- **PyMuPDF Layout Engine**: Extracts clean scholarly text, mathematical formulations, section headers, abstracts, author attributions, and page numbers.
+### 1. 🖼️ Multimodal Visual Reasoning & Figure Explorer (NEW)
+- **Visual Diagram & Plot Analysis**: Upload or paste (`Ctrl+V`) screenshots of architecture diagrams, attention heatmaps, loss curves, and equations directly into chat.
+- **Multimodal StateGraph Routing**: The LangGraph agent classifies visual queries (`multimodal_visual_qa`), performs targeted vector retrieval, and synthesizes visual breakdowns with page grounding.
+- **Interactive Figure Knowledge Base**: A dedicated **Figure & Visual Explorer** scans papers, renders 120-DPI visual crops of diagrams, tables, and charts, and lets you ask the agent about any figure with 1 click.
+- **Multi-Engine Multimodal Execution**: Native vision reasoning with Google Gemini (`gemini-2.5-flash`), OpenAI (`gpt-4o-mini`), and local structural diagram grounding.
+
+### 2. 📚 Document Library & Vector Ingestion
+- **PyMuPDF Layout Engine**: Extracts clean scholarly text, mathematical formulations, section headers, abstracts, author attributions, page numbers, and high-resolution figure snapshots.
 - **Section & Page-Aware Chunking**: Chunks text with sliding overlaps while tagging exact page numbers and hierarchical section headings.
 - **ChromaDB Vector Store**: Dense 384-dimensional persistent semantic vector store with fast similarity ranking.
-- **Preloaded Landmark Papers**: Comes with 1-click seeding for landmark AI papers (*Attention Is All You Need*, *LoRA*, and *FlashAttention*) for instant out-of-the-box evaluation.
+- **Preloaded Landmark Papers**: Comes with 1-click seeding for 12 landmark AI papers (*Attention Is All You Need*, *LoRA*, *FlashAttention*, *DeepSeek-R1*, *LLaMA*, *Chinchilla*, *Constitutional AI*, etc.).
 
-### 2. 🤖 LangGraph Multi-Tool AI Agent
-- **Dynamic StateGraph Routing**: Intelligently classifies user intent into `contextual_qa`, `paper_comparison`, `research_gaps`, `literature_review`, or `citation_lookup`.
+### 3. 🤖 LangGraph Multi-Tool AI Agent
+- **Dynamic StateGraph Routing**: Intelligently classifies user intent into `multimodal_visual_qa`, `contextual_qa`, `paper_comparison`, `research_gaps`, `literature_review`, or `citation_lookup`.
 - **Executable Tool Calling**: Dispatches discrete tools including `retrieve_paper_context`, `compare_research_papers`, `identify_research_gaps`, `extract_citations_and_sources`, and `generate_structured_literature_review`.
 - **Grounding & Verification Node**: Audits citations against vector store chunks to guarantee claims are grounded in document excerpts.
 
-### 3. 🔍 Page-Level Grounding & Interactive Citation Drawer
+### 4. 🔍 Page-Level Grounding & Interactive Citation Drawer
 - Every answer features inline scholarly citations in the format `[Paper Title, Page X]`.
 - Clicking any citation pill opens an interactive slide-over drawer displaying the exact page coordinate, section header, vector similarity percentage, and verbatim source text.
 
-### 4. ⚖️ Cross-Paper Comparison Matrix
+### 5. ⚖️ Cross-Paper Comparison Matrix
 - Multi-select 2 or more research papers.
 - Generates side-by-side matrices contrasting:
   - **Research Objectives & Motivation**
@@ -30,11 +36,11 @@ RESEARCHMIND is an advanced, production-grade full-stack research workspace engi
   - **Key Findings & Accuracies**
   - **Primary Limitations & Trade-offs**
 
-### 5. 🔬 Research Gap Identification Engine
+### 6. 🔬 Research Gap Identification Engine
 - Dissects failure cases, hardware bounds, and limitation disclosures.
 - Formulates novel, actionable research questions suitable for grant proposals, PhD dissertations, or conference submissions.
 
-### 6. 📝 Structured Literature Review Studio
+### 7. 📝 Structured Literature Review Studio
 - Synthesizes multiple papers into a publication-grade survey:
   - *Abstract* (150-word overview)
   - *Theoretical Background & Foundations*
@@ -44,10 +50,10 @@ RESEARCHMIND is an advanced, production-grade full-stack research workspace engi
   - *References & Page Grounding*
 - Supports 1-click **Copy Markdown** and **Print / PDF Export**.
 
-### 7. ⚙️ Multi-Provider LLM Integration
-- **Google Gemini**: Live support via official Google GenAI SDK (`gemini-2.5-flash`).
-- **OpenAI**: Live support via official OpenAI SDK (`gpt-4o-mini`).
-- **Local Academic Synthesizer**: Grounded offline fallback that performs deterministic academic synthesis from retrieved ChromaDB chunks without requiring external API keys.
+### 8. ⚙️ Multi-Provider LLM Integration
+- **Google Gemini**: Live support via official Google GenAI SDK (`gemini-2.5-flash`) with native image & vision understanding.
+- **OpenAI**: Live support via official OpenAI SDK (`gpt-4o-mini`) with vision endpoint.
+- **Local Academic Synthesizer**: Grounded offline fallback that performs deterministic academic and visual structural synthesis from retrieved ChromaDB chunks without requiring external API keys.
 
 ---
 
@@ -59,7 +65,8 @@ flowchart TD
     
     subgraph Frontend["Frontend Layer"]
         UI --> Lib["Document Library & Dropzone"]
-        UI --> Chat["LangGraph Agent Chat"]
+        UI --> Chat["Multimodal LangGraph Agent Chat (Image + Text)"]
+        UI --> Fig["Figure & Visual Diagram Explorer"]
         UI --> Comp["Paper Comparison Studio"]
         UI --> Gap["Research Gap Explorer"]
         UI --> Rev["Literature Review Studio"]
@@ -67,17 +74,31 @@ flowchart TD
     end
 
     subgraph Backend["FastAPI REST & Agent Backend"]
-        PDF["PyMuPDF Document Parser"]
+        PDF["PyMuPDF Document & Visual Parser"]
         Vector["ChromaDB Vector Store (384-d Persistent)"]
+        Figures["Figures & Diagrams Store (PNG Renditions)"]
         
         subgraph LangGraphAgent["LangGraph State Workflow"]
-            Router["Intent Router Node"] --> ToolExec["Executable Tools Execution Node"]
-            ToolExec --> Synthesis["Academic Synthesis Node"]
+            Router["Intent Router Node (Text & Image)"] --> ToolExec["Executable Tools Execution Node"]
+            ToolExec --> Synthesis["Multimodal Academic Synthesis Node"]
             Synthesis --> Verifier["Grounding & Citation Verification Node"]
         end
 
         Tools["Executable Tools: retrieve, compare, gaps, review, citations"]
     end
+
+    Lib -->|PDF Upload / Seeding| PDF
+    PDF -->|Page-tagged Chunks| Vector
+    PDF -->|Rendered Page Diagrams| Figures
+    Chat -->|Agent Query + Attached Image| Router
+    Fig -->|1-Click Figure Inspection| Chat
+    Comp -->|Compare Request| Tools
+    Gap -->|Gap Request| Tools
+    Rev -->|Review Request| Tools
+    ToolExec -->|Vector Query| Vector
+    Synthesis -->|Structured Answer + Visual Breakdown| UI
+    Verifier -->|Clickable Citations| Drawer
+```
 
     Lib -->|PDF Upload / Seeding| PDF
     PDF -->|Page-tagged Chunks| Vector

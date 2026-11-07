@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import DocumentLibrary from './components/DocumentLibrary';
 import AgentChat from './components/AgentChat';
+import FigureExplorer from './components/FigureExplorer';
 import PaperComparison from './components/PaperComparison';
 import ResearchGaps from './components/ResearchGaps';
 import LiteratureReview from './components/LiteratureReview';
@@ -20,6 +21,7 @@ export default function App() {
   const [isAddPaperOpen, setIsAddPaperOpen] = useState(false);
   const [modelStatus, setModelStatus] = useState(null);
   const [loadingSamples, setLoadingSamples] = useState(false);
+  const [selectedVisualForChat, setSelectedVisualForChat] = useState(null);
 
   useEffect(() => {
     // Load indexed papers
@@ -57,6 +59,11 @@ export default function App() {
     } finally {
       setLoadingSamples(false);
     }
+  };
+
+  const handleSelectFigureForChat = (figure) => {
+    setSelectedVisualForChat(figure);
+    setActiveTab('agent');
   };
 
   return (
@@ -102,6 +109,15 @@ export default function App() {
               selectedPaperId={selectedPaperId}
               setSelectedPaperId={setSelectedPaperId}
               onCitationClick={(cit) => setActiveCitation(cit)}
+              preloadedVisual={selectedVisualForChat}
+              onClearPreloadedVisual={() => setSelectedVisualForChat(null)}
+            />
+          )}
+
+          {activeTab === 'visuals' && (
+            <FigureExplorer 
+              papers={papers}
+              onSelectFigureForChat={handleSelectFigureForChat}
             />
           )}
 

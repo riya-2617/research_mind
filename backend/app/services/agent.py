@@ -16,6 +16,8 @@ from app.services.tools import (
 class AgentState(TypedDict):
     query: str
     paper_id: Optional[str]
+    image_data: Optional[str]
+    mime_type: Optional[str]
     intent: str
     tool_calls: List[Dict[str, Any]]
     tool_results: List[Dict[str, Any]]
@@ -26,9 +28,10 @@ class AgentState(TypedDict):
 
 class ResearchMindAgent:
     """
-    LangGraph-powered AI Research Assistant Agent.
-    Orchestrates intent classification, dynamic tool invocation,
-    context retrieval, academic synthesis, and citation verification.
+    LangGraph-powered Multimodal AI Research Assistant Agent.
+    Orchestrates intent classification, dynamic tool invocation, multimodal visual
+    reasoning over architecture diagrams and benchmark charts, academic synthesis,
+    and grounded citation verification.
     """
     def __init__(self):
         self.workflow = self._build_graph()
@@ -51,11 +54,28 @@ class ResearchMindAgent:
 
     def router_node(self, state: AgentState) -> Dict[str, Any]:
         query = state["query"].lower()
+        has_image = bool(state.get("image_data"))
         trace = list(state.get("execution_trace", []))
         tool_calls = []
 
         # Intent detection
-        if any(w in query for w in ["compare", "contrast", "difference between", "comparison matrix"]):
+        if has_image or any(w in query for w in ["diagram", "figure", "visual", "chart", "plot", "architecture layout", "graph image"]):
+            intent = "multimodal_visual_qa"
+            tool_calls.append({
+                "tool": "retrieve_paper_context",
+                "args": {
+                    "query": state["query"],
+                    "paper_id": state.get("paper_id"),
+                    "top_k": 5
+                }
+            })
+            trace.append({
+                "step": "Intent Routing",
+                "decision": "Identified Multimodal Visual Analysis Intent",
+                "selected_tool": "retrieve_paper_context",
+                "has_attached_image": has_image
+            })
+        elif any(w in query for w in ["compare", "contrast", "difference between", "comparison matrix"]):
             intent = "paper_comparison"
             tool_calls.append({
                 "tool": "compare_research_papers",
@@ -192,6 +212,7 @@ class ResearchMindAgent:
         trace = list(state.get("execution_trace", []))
         intent = state["intent"]
         query = state["query"]
+        image_data = state.get("image_data")
 
         # If a specialized tool already synthesized a rich output, leverage that
         if intent in ["paper_comparison", "research_gaps", "literature_review"]:
@@ -208,10 +229,9 @@ class ResearchMindAgent:
             })
             return {"final_response": final_text, "execution_trace": trace}
 
-        # Otherwise synthesize for Contextual QA
+        # Otherwise synthesize for Contextual QA or Multimodal Visual QA
         chunks = state.get("context_chunks", [])
         if not chunks:
-            # Try a quick fallback vector search if chunks empty
             chunks = vector_store.search(query=query, top_k=4, paper_id=state.get("paper_id"))
 
         context_lines = []
@@ -220,29 +240,44 @@ class ResearchMindAgent:
 
         context_block = "\n\n".join(context_lines)
 
+        visual_instruction = (
+            "Analyze the attached visual image (architecture diagram, flow chart, ablation plot, or equation) "
+            "in rigorous academic detail and correlate it directly with the extracted paper context."
+            if image_data else ""
+        )
+
         prompt = (
-            f"You are RESEARCHMIND, an expert AI Research Assistant.\n\n"
+            f"You are RESEARCHMIND, an expert Multimodal AI Research Assistant.\n\n"
+            f"{visual_instruction}\n\n"
             f"Context from uploaded research papers:\n"
             f"----------------------------------------\n"
             f"{context_block}\n"
             f"----------------------------------------\n\n"
             f"User Question: {query}\n\n"
             f"Instructions:\n"
-            f"1. Answer the question thoroughly, precisely, and with academic depth.\n"
+            f"1. Answer thoroughly, precisely, and with scholarly mathematical depth.\n"
             f"2. Every factual statement must be grounded in the context provided.\n"
             f"3. Cite sources inline using the exact bracket format: [Paper Title, Page X].\n"
-            f"4. If the context does not contain the answer, explicitly state what is known from the papers and what remains unmentioned.\n"
+            f"4. If an image is provided, dissect its components, operational flow, and benchmark implications.\n"
             f"5. Conclude with a brief 'Source Evidence' section summarizing the cited pages."
         )
 
-        final_response = llm_manager.generate(
-            prompt=prompt,
-            system_prompt="You are a world-class academic research scientist. Be precise, scholarly, and rigorous."
-        )
+        if image_data:
+            final_response = llm_manager.generate_multimodal(
+                prompt=prompt,
+                image_data=image_data,
+                mime_type=state.get("mime_type", "image/png"),
+                system_prompt="You are a world-class academic research scientist specializing in multimodal visual inspection of research papers, figures, and technical proofs."
+            )
+        else:
+            final_response = llm_manager.generate(
+                prompt=prompt,
+                system_prompt="You are a world-class academic research scientist. Be precise, scholarly, and rigorous."
+            )
 
         trace.append({
             "step": "Academic Synthesis",
-            "details": f"Generated grounded answer from {len(chunks)} evidence chunks."
+            "details": f"Generated grounded {'multimodal visual ' if image_data else ''}answer from {len(chunks)} evidence chunks."
         })
 
         return {
@@ -292,10 +327,18 @@ class ResearchMindAgent:
             "execution_trace": trace
         }
 
-    def run(self, query: str, paper_id: Optional[str] = None) -> Dict[str, Any]:
+    def run(
+        self, 
+        query: str, 
+        paper_id: Optional[str] = None, 
+        image_data: Optional[str] = None, 
+        mime_type: Optional[str] = "image/png"
+    ) -> Dict[str, Any]:
         initial_state: AgentState = {
             "query": query,
             "paper_id": paper_id,
+            "image_data": image_data,
+            "mime_type": mime_type,
             "intent": "",
             "tool_calls": [],
             "tool_results": [],
@@ -313,8 +356,8 @@ class ResearchMindAgent:
             "citations": result.get("citations", []),
             "verified_citations": result.get("verified_citations", []),
             "tool_calls": result.get("tool_calls", []),
-            "execution_trace": result.get("execution_trace", [])
+            "execution_trace": result.get("execution_trace", []),
+            "has_visual": bool(image_data)
         }
 
 agent_workflow = ResearchMindAgent()
-

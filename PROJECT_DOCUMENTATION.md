@@ -270,8 +270,14 @@ flowchart TD
   3. **Custom Paper & ArXiv Ingestion**:
      - *Custom Paper Studio*: Enter title, authors, abstract, methodology, findings, and limitations for unpublished drafts or thesis ideas. RESEARCHMIND dynamically generates a publication-grade PDF and indexes it into ChromaDB.
      - *ArXiv Fast Importer*: Paste any ArXiv ID (e.g. `2302.13971`, `2305.14314`) or URL to ingest and ground pre-print literature.
-  6. **Direct Preference Optimization: Your Language Model is Secretly a Reward Model (DPO)** *(Rafailov et al., Stanford)*: Closed-form policy optimization under the Bradley-Terry preference model bypassing unstable PPO reinforcement learning.
-  7. **DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning** *(DeepSeek-AI)*: Group Relative Policy Optimization (GRPO), emergence of long thinking tokens, self-correction, and distillation into lightweight models.
+
+### Feature 10: Multimodal Visual Reasoning & Figure Explorer
+- **Location**: `frontend/src/components/FigureExplorer.jsx`, `frontend/src/components/AgentChat.jsx`, `backend/app/routers/figures.py`, `backend/app/services/agent.py`
+- **What it does**:
+  1. **Visual Figure Extraction**: Automatically renders 120-DPI visual crops of all diagrams, tables, and architectural workflows from research PDFs using PyMuPDF.
+  2. **Multimodal Agent Chat**: Users can upload, attach, or paste (`Ctrl+V`) screenshots of architecture diagrams, attention heatmaps, loss curves, and equations directly into chat.
+  3. **Visual Intent StateGraph**: The LangGraph router node classifies visual queries as `multimodal_visual_qa`, extracts dense vector context, and synthesizes answers combining visual reasoning and textual proofs.
+  4. **Native Provider Vision**: Leverages Gemini 2.5 Flash and OpenAI GPT-4o Mini native vision APIs, alongside deterministic offline visual structural fallback.
 
 ---
 

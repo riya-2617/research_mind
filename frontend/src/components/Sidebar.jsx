@@ -12,7 +12,8 @@ import {
   Cpu, 
   Database, 
   ShieldAlert,
-  Plus
+  Plus,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, paperCount, onOpenAddPaper }) {
@@ -28,10 +29,17 @@ export default function Sidebar({ activeTab, setActiveTab, paperCount, onOpenAdd
     {
       id: 'agent',
       label: 'AI Research Agent',
-      description: 'LangGraph Reasoning & QA',
+      description: 'Multimodal LangGraph QA',
       icon: Bot,
       highlight: true,
       color: 'text-primary-400'
+    },
+    {
+      id: 'visuals',
+      label: 'Figure & Visual Explorer',
+      description: 'Architecture Diagrams & Plots',
+      icon: ImageIcon,
+      color: 'text-cyan-400'
     },
   ];
 
@@ -116,7 +124,7 @@ export default function Sidebar({ activeTab, setActiveTab, paperCount, onOpenAdd
 
   return (
     <aside className="w-64 border-r border-white/[0.08] bg-academic-950/70 backdrop-blur-xl flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] p-3">
-      <div className="overflow-y-auto pr-1">
+      <div className="overflow-y-auto pr-1 custom-scrollbar">
         {/* Quick Add Paper Action */}
         <div className="mb-4">
           <button
@@ -141,11 +149,17 @@ export default function Sidebar({ activeTab, setActiveTab, paperCount, onOpenAdd
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-mono font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Operational
+            Multimodal
           </span>
         </div>
 
         <div className="space-y-1.5 text-[11px]">
+          <div className="flex justify-between items-center text-slate-400">
+            <span>Vision Engine:</span>
+            <span className="text-cyan-300 font-mono font-medium bg-cyan-950/80 px-1.5 py-0.5 rounded text-[10px] border border-cyan-800/40">
+              PyMuPDF + Vision
+            </span>
+          </div>
           <div className="flex justify-between items-center text-slate-400">
             <span>Vector Store:</span>
             <span className="text-slate-200 font-mono font-medium bg-academic-800 px-1.5 py-0.5 rounded text-[10px]">
@@ -153,21 +167,9 @@ export default function Sidebar({ activeTab, setActiveTab, paperCount, onOpenAdd
             </span>
           </div>
           <div className="flex justify-between items-center text-slate-400">
-            <span>Embeddings:</span>
-            <span className="text-slate-200 font-mono font-medium bg-academic-800 px-1.5 py-0.5 rounded text-[10px]">
-              384-d Dense
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-slate-400">
             <span>Orchestration:</span>
             <span className="text-primary-300 font-mono font-medium bg-primary-950 px-1.5 py-0.5 rounded text-[10px] border border-primary-800/40">
               LangGraph
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-slate-400">
-            <span>Active Tools:</span>
-            <span className="text-accent-emerald font-mono font-medium bg-emerald-950 px-1.5 py-0.5 rounded text-[10px] border border-emerald-800/40">
-              5 Available
             </span>
           </div>
         </div>

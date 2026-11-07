@@ -15,17 +15,27 @@ export const uploadPapers = (formData) => api.post('/papers/upload', formData, {
 export const deletePaper = (id) => api.delete(`/papers/${id}`).then(res => res.data);
 export const loadSamplePapers = () => api.post('/papers/load_samples').then(res => res.data);
 
-// New Paper Addition Capabilities
+// Paper Addition Capabilities
 export const getPaperCatalog = () => api.get('/papers/catalog').then(res => res.data);
 export const addCatalogPaper = (catalogId) => api.post(`/papers/catalog/${catalogId}`).then(res => res.data);
 export const addCustomPaper = (data) => api.post('/papers/custom', data).then(res => res.data);
 export const addArxivPaper = (query) => api.post('/papers/arxiv', { query }).then(res => res.data);
 
+// Multimodal Visual Figures & Diagrams
+export const getAllFigures = () => api.get('/figures').then(res => res.data);
+export const getPaperFigures = (paperId) => api.get(`/figures/paper/${paperId}`).then(res => res.data);
+
 export const askRag = (query, paperId = null, topK = 5) => 
   api.post('/rag/ask', { query, paper_id: paperId, top_k: topK }).then(res => res.data);
 
-export const chatWithAgent = (query, paperId = null) => 
-  api.post('/agent/chat', { query, paper_id: paperId }).then(res => res.data);
+// Multimodal Agent Chat (supports text + optional image)
+export const chatWithAgent = (query, paperId = null, imageData = null, mimeType = "image/png") => 
+  api.post('/agent/chat', { 
+    query, 
+    paper_id: paperId,
+    image_data: imageData,
+    mime_type: mimeType
+  }).then(res => res.data);
 
 export const comparePapers = (paperIds, criteria = null) => 
   api.post('/compare', { paper_ids: paperIds, criteria }).then(res => res.data);

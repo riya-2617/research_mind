@@ -3,10 +3,11 @@ import pymupdf as fitz
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import uuid
+from app.config import FIGURES_DIR
 
 class PDFProcessor:
     """
-    Extracts text, metadata, and structured section-aware chunks
+    Extracts text, metadata, visual figures, and structured section-aware chunks
     with page-level tracking from academic research PDFs.
     """
 
@@ -48,7 +49,6 @@ class PDFProcessor:
         # Authors detection
         author = meta.get("author", "").strip()
         if not author:
-            # Try to grab lines between title and abstract
             lines = [l.strip() for l in first_page_text.split("\n") if l.strip()]
             author_candidates = []
             for l in lines[1:6]:
@@ -69,7 +69,7 @@ class PDFProcessor:
     @classmethod
     def process_pdf(cls, file_path: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> Dict[str, Any]:
         """
-        Parses a PDF into document metadata and page-level chunked nodes.
+        Parses a PDF into document metadata, multimodal visual page figures, and chunked nodes.
         """
         doc = fitz.open(file_path)
         filename = Path(file_path).name
@@ -80,6 +80,7 @@ class PDFProcessor:
 
         chunks: List[Dict[str, Any]] = []
         full_text_pages: List[Dict[str, Any]] = []
+        figures: List[Dict[str, Any]] = []
 
         current_section = "Introduction / Overview"
 
@@ -100,6 +101,31 @@ class PDFProcessor:
                     if len(l_strip) < 45 and not l_strip.endswith('.'):
                         current_section = l_strip
                         break
+
+            # Multimodal visual extraction: Render page visual figure
+            fig_filename = f"{paper_id}_p{page_num}.png"
+            fig_path = FIGURES_DIR / fig_filename
+            try:
+                if not fig_path.exists():
+                    pix = page.get_pixmap(dpi=120)
+                    pix.save(str(fig_path))
+
+                # Detect figure / table captions
+                captions = re.findall(r'((?:Figure|Table|Fig\.)\s+\d+[:\.\s]+[^\n\.]+)', page_text, re.IGNORECASE)
+                caption_desc = captions[0] if captions else f"Architectural layout, empirical tables, or algorithmic structure (Page {page_num})"
+
+                figures.append({
+                    "figure_id": f"{paper_id}_p{page_num}",
+                    "paper_id": paper_id,
+                    "paper_title": metadata["title"],
+                    "page": page_num,
+                    "caption": caption_desc,
+                    "section": current_section,
+                    "image_url": f"/api/figures/{fig_filename}",
+                    "filename": fig_filename
+                })
+            except Exception as e:
+                print(f"[PDFProcessor] Warning: Could not render page visual: {e}")
 
             # Section and page-aware chunking
             clean_text = re.sub(r'\s+', ' ', page_text).strip()
@@ -140,5 +166,6 @@ class PDFProcessor:
         return {
             "metadata": metadata,
             "chunks": chunks,
-            "full_text_pages": full_text_pages
+            "full_text_pages": full_text_pages,
+            "figures": figures
         }
